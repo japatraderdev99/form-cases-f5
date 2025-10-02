@@ -2,7 +2,6 @@
 
 import { UseFormReturn } from "react-hook-form";
 import { CaseFormData } from "@/lib/schemas";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -406,7 +405,7 @@ export function DepoimentoSection({ form }: FormSectionsProps) {
         </div>
 
         <div>
-          <Label htmlFor="momento_virada">Houve algum momento de "virada" ou insight importante na jornada?</Label>
+          <Label htmlFor="momento_virada">Houve algum momento de &quot;virada&quot; ou insight importante na jornada?</Label>
           <Textarea
             id="momento_virada"
             {...form.register("momento_virada")}
@@ -470,7 +469,7 @@ export function ContextoSection({ form }: FormSectionsProps) {
           <Label>Tem alguma foto/print de relatório que podemos usar?</Label>
           <RadioGroup
             value={form.watch("tem_anexo")}
-            onValueChange={(value) => form.setValue("tem_anexo", value as any)}
+            onValueChange={(value) => form.setValue("tem_anexo", value as "sim" | "nao")}
             className="mt-2 space-y-2"
           >
             <div className="flex items-center space-x-2">
@@ -488,7 +487,7 @@ export function ContextoSection({ form }: FormSectionsProps) {
           <Label>Esse case pode ser publicado com o nome da clínica?</Label>
           <RadioGroup
             value={form.watch("publicar_nome")}
-            onValueChange={(value) => form.setValue("publicar_nome", value as any)}
+            onValueChange={(value) => form.setValue("publicar_nome", value as "sim" | "nao")}
             className="mt-2 space-y-2"
           >
             <div className="flex items-center space-x-2">
@@ -505,3 +504,4 @@ export function ContextoSection({ form }: FormSectionsProps) {
     </Card>
   );
 }
+

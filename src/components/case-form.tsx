@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { caseFormSchema, CaseFormData } from "@/lib/schemas";
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Calculator } from "lucide-react";
 import { EstrategiaSection, ResultadosSection, DepoimentoSection, ContextoSection } from "./form-sections";
 
 export function CaseForm() {
@@ -40,9 +40,60 @@ export function CaseForm() {
     }
   };
 
-  const onSubmit = (data: CaseFormData) => {
-    console.log("Form data:", data);
-    // Aqui você pode enviar os dados para uma API
+  // Funções para cálculos automáticos
+  const calculateTicketMedio = (faturamento: string, fechamentos: number) => {
+    const fat = parseFloat(faturamento.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
+    return fechamentos > 0 ? (fat / fechamentos).toFixed(2) : '0';
+  };
+
+  const calculateTaxaComparecimento = (agendamentos: number, comparecimentos: number) => {
+    return agendamentos > 0 ? ((comparecimentos / agendamentos) * 100).toFixed(1) : '0';
+  };
+
+  const calculateROI = (faturamento: string, investimento: string) => {
+    const fat = parseFloat(faturamento.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
+    const inv = parseFloat(investimento.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
+    return inv > 0 ? (((fat - inv) / inv) * 100).toFixed(1) : '0';
+  };
+
+  // Atualizar cálculos automaticamente
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name?.includes('faturamento_mes') || name?.includes('fechamentos') || 
+          name?.includes('agendamentos') || name?.includes('comparecimentos') || 
+          name?.includes('investimento')) {
+        
+        // Cálculos automáticos são feitos nos componentes visuais
+        // Não precisamos fazer nada aqui pois os valores são calculados em tempo real
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  const onSubmit = async (data: CaseFormData) => {
+    try {
+      console.log("Form data:", data);
+      
+      // Enviar para Formspree
+      const response = await fetch("https://formspree.io/f/mldpngzw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        alert("Formulário enviado com sucesso! Obrigado pelo case.");
+        form.reset();
+        setMeses([1, 2, 3]);
+      } else {
+        alert("Erro ao enviar formulário. Tente novamente.");
+      }
+    } catch (error) {
+      console.error("Erro:", error);
+      alert("Erro ao enviar formulário. Tente novamente.");
+    }
   };
 
   return (
@@ -54,7 +105,7 @@ export function CaseForm() {
           </CardTitle>
           <p className="mt-4 text-gray-600">
             <strong>INSTRUÇÕES PARA O GESTOR DE TRÁFEGO:</strong><br />
-            Preencha todas as seções com o máximo de detalhes possível. Quanto mais informações, melhor o storytelling do case. Se não souber algum dado exato, coloque uma estimativa e sinalize com "(aprox.)".
+            Preencha todas as seções com o máximo de detalhes possível. Quanto mais informações, melhor o storytelling do case. Se não souber algum dado exato, coloque uma estimativa e sinalize com &quot;(aprox.)&quot;.
           </p>
         </CardHeader>
 
@@ -96,7 +147,7 @@ export function CaseForm() {
                   <Label>Tipo de Clínica:</Label>
                   <RadioGroup
                     value={form.watch("tipo_clinica")}
-                    onValueChange={(value) => form.setValue("tipo_clinica", value as any)}
+                    onValueChange={(value) => form.setValue("tipo_clinica", value as "geral" | "ortodontia" | "implantodontia" | "odontopediatria" | "hof" | "franquia" | "outro")}
                     className="mt-2 space-y-2"
                   >
                     <div className="flex items-center space-x-2">
@@ -142,7 +193,7 @@ export function CaseForm() {
                   <Label>Perfil do Cliente (marque o principal):</Label>
                   <RadioGroup
                     value={form.watch("perfil_cliente")}
-                    onValueChange={(value) => form.setValue("perfil_cliente", value as any)}
+                    onValueChange={(value) => form.setValue("perfil_cliente", value as "pequena" | "media" | "grande" | "referencia" | "saindo_franquia")}
                     className="mt-2 space-y-2"
                   >
                     <div className="flex items-center space-x-2">
@@ -267,7 +318,7 @@ export function CaseForm() {
                   <Label>Como o cliente chegou até a f5?</Label>
                   <RadioGroup
                     value={form.watch("origem_cliente")}
-                    onValueChange={(value) => form.setValue("origem_cliente", value as any)}
+                    onValueChange={(value) => form.setValue("origem_cliente", value as "indicacao" | "anuncio" | "redes_sociais" | "google" | "evento" | "outro")}
                     className="mt-2 space-y-2"
                   >
                     <div className="flex items-center space-x-2">
@@ -309,7 +360,7 @@ export function CaseForm() {
                   <Label>O cliente já havia tentado marketing digital antes?</Label>
                   <RadioGroup
                     value={form.watch("mkt_anterior")}
-                    onValueChange={(value) => form.setValue("mkt_anterior", value as any)}
+                    onValueChange={(value) => form.setValue("mkt_anterior", value as "outra_agencia" | "interno" | "primeira_vez")}
                     className="mt-2 space-y-2"
                   >
                     <div className="flex items-center space-x-2">
@@ -466,6 +517,42 @@ export function CaseForm() {
                             placeholder="R$"
                             className="mt-1"
                           />
+                        </div>
+                        <div>
+                          <Label className="text-green-600 font-medium">
+                            <Calculator className="inline h-4 w-4 mr-1" />
+                            Ticket Médio (auto):
+                          </Label>
+                          <div className="mt-1 p-2 bg-green-50 border border-green-200 rounded text-green-800 font-mono">
+                            R$ {calculateTicketMedio(
+                              form.watch(`meses.${index}.faturamento_mes`) || '0',
+                              form.watch(`meses.${index}.fechamentos`) || 0
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-blue-600 font-medium">
+                            <Calculator className="inline h-4 w-4 mr-1" />
+                            Taxa Comparecimento (auto):
+                          </Label>
+                          <div className="mt-1 p-2 bg-blue-50 border border-blue-200 rounded text-blue-800 font-mono">
+                            {calculateTaxaComparecimento(
+                              form.watch(`meses.${index}.agendamentos`) || 0,
+                              form.watch(`meses.${index}.comparecimentos`) || 0
+                            )}%
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-purple-600 font-medium">
+                            <Calculator className="inline h-4 w-4 mr-1" />
+                            ROI (auto):
+                          </Label>
+                          <div className="mt-1 p-2 bg-purple-50 border border-purple-200 rounded text-purple-800 font-mono">
+                            {calculateROI(
+                              form.watch(`meses.${index}.faturamento_mes`) || '0',
+                              form.watch(`meses.${index}.investimento`) || '0'
+                            )}%
+                          </div>
                         </div>
                       </div>
                       <div>
